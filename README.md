@@ -3,6 +3,8 @@ Arduino project for temperature using a K-type thermocouple, and a serial interf
 
 Unit of measure used is farenheit.
 
+The default setpoint is 1050*f.
+
 This kiln controller accepts serial commands, which can be issued individually or in a chained string:
 
 > P - P of PID, followed by a float
