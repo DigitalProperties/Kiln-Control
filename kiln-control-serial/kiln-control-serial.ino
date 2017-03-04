@@ -78,7 +78,7 @@ void loop() {
   pidActualI = myPID.GetKi(); 
   pidActualD = myPID.GetKd();
   
-  Input = ktc.readFahrenheit();
+  
   
   if (currentMillis >= (previousMillis + 500)){
       // basic readout test
@@ -92,10 +92,9 @@ void loop() {
       Serial.print(pidActualI);
       Serial.print(" | ");
       Serial.print(pidActualD);
-
-    previousMillis = currentMillis;
-  
-  myPID.Compute();
+      Input = ktc.readFahrenheit();
+      previousMillis = currentMillis;
+      myPID.Compute();
   }
 
 
