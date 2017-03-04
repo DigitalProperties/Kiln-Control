@@ -28,7 +28,7 @@ unsigned long windowStartTime;
 unsigned long previousMillis;
 unsigned long soakTimer;
 
-void serialOut(){
+void serialOut(unsigned long timerRemain){
       // basic readout test
       Serial.print("\n Target = ");
       Serial.print(setpoint);
@@ -42,7 +42,7 @@ void serialOut(){
       Serial.print(pidActualD);
       if (soakTimer >= 1){
        Serial.print("\t | ");
-       Serial.print(millisRemain / 60000);
+       Serial.print(timerRemain / 60000);
        Serial.print("\t min");
       }
 }
@@ -106,7 +106,7 @@ void loop() {
   
   
   if (currentMillis >= (previousMillis + 500)){
-      serialOut();
+      serialOut(0);
       Input = ktc.readFahrenheit();
       previousMillis = currentMillis;
       myPID.Compute();
@@ -121,7 +121,7 @@ void loop() {
      millisRemain = currentMillis - startMillis;
      
      while(millisRemain < soakTimer){
-        serialOut();
+        serialOut(millisRemain);
         if(currentMillis - windowStartTime>WindowSize)
         { //time to shift the Relay Window
           windowStartTime += WindowSize;
