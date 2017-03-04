@@ -122,15 +122,22 @@ void loop() {
      
      while(millisRemain < soakTimer){
             serialOut();
-              if (soakTimer >= 1){
+            
              Serial.print("\t | ");
              Serial.print(millisRemain / 60000);
              Serial.print("\t min");
-            }
-            
+             Serial.print("\t | ");
+             Serial.print(currentMillis / 60000);
+             Serial.print("\t min");
+             Serial.print("\t | ");
+             Serial.print(startMillis / 60000);
+             Serial.print("\t min");
+
+      if (currentMillis >= (previousMillis + 500)){
             Input = ktc.readFahrenheit();
             previousMillis = currentMillis;
             myPID.Compute();
+      }
       
         if(currentMillis - windowStartTime>WindowSize)
         { //time to shift the Relay Window
