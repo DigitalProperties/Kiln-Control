@@ -20,14 +20,13 @@ double pidD = 0.25;
 
 MAX6675 ktc(ktcCLK, ktcCS, ktcSO);
 
-//SoftwareSerial BTserial(9, 10); // RX | TX
-
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
 
 int WindowSize = 5000;  
 unsigned long windowStartTime;
 unsigned long previousMillis;
+unsigned long soakTimer;
 
 void setup() {
   // give the MAX a little time to settle
@@ -45,7 +44,6 @@ void setup() {
   myPID.SetMode(AUTOMATIC);
 
   Serial.begin(9600);
-  //BTserial.begin(38400);
 }
 
 void loop() {
@@ -69,6 +67,10 @@ void loop() {
         break;
         case 't': 
           setpoint = Serial.parseInt();
+        break;
+        case 'm':
+          soakTimer = Serial.parseInt();
+          soakTimer = soakTimer * 60000;   //minutes to millis
         break;
       }
     myPID.SetTunings(pidP, pidI, pidD);
@@ -97,21 +99,39 @@ void loop() {
       myPID.Compute();
   }
 
-
+  if (soakTimer >= 1 && Input >= setpoint){ //check if there is a timer set and that the device is up to temp
+     unsigned long startMillis = millis(); 
+     
+     while((currentMillis - startMillis) < soakTimer){
+        if(currentMillis - windowStartTime>WindowSize)
+        { //time to shift the Relay Window
+          windowStartTime += WindowSize;
+        }
+        
+        if(Output < currentMillis - windowStartTime) {
+          digitalWrite(RelayPin,HIGH);
+        }
+        else{
+          digitalWrite(RelayPin,LOW);
+        }
+     }
+  }
 
   /************************************************
    * turn the output pin on/off based on pid output
    ************************************************/
-  if(millis() - windowStartTime>WindowSize)
-  { //time to shift the Relay Window
-    windowStartTime += WindowSize;
-  }
-  
-  if(Output < millis() - windowStartTime) {
-    digitalWrite(RelayPin,HIGH);
-  }
   else{
-    digitalWrite(RelayPin,LOW);
+    if(millis() - windowStartTime>WindowSize)
+    { //time to shift the Relay Window
+      windowStartTime += WindowSize;
+    }
+    
+    if(Output < millis() - windowStartTime) {
+      digitalWrite(RelayPin,HIGH);
+    }
+    else{
+      digitalWrite(RelayPin,LOW);
+    }
   }
 }
 
