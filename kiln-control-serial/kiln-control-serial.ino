@@ -28,7 +28,7 @@ unsigned long windowStartTime;
 unsigned long previousMillis;
 unsigned long soakTimer;
 
-void serialOut(unsigned long timerRemain){
+void serialOut(){
       // basic readout test
       Serial.print("\n Target = ");
       Serial.print(setpoint);
@@ -40,39 +40,9 @@ void serialOut(unsigned long timerRemain){
       Serial.print(pidActualI);
       Serial.print(" | ");
       Serial.print(pidActualD);
-      if (soakTimer >= 1){
-       Serial.print("\t | ");
-       Serial.print(timerRemain / 60000);
-       Serial.print("\t min");
-      }
 }
 
 void serialIn(){
-  
-}
-
-void setup() {
-  // give the MAX a little time to settle
-   windowStartTime = millis();
-   
-   //pin out
-  pinMode(RelayPin, OUTPUT);
-  //initialize the variables we're linked to
-  setpoint = 1050;
-
-  //tell the PID to range between 0 and the full window size
-  myPID.SetOutputLimits(0, WindowSize);
-
-  //turn the PID on
-  myPID.SetMode(AUTOMATIC);
-
-  Serial.begin(9600);
-}
-
-void loop() {
-  unsigned long currentMillis = millis();
-  unsigned long millisRemain;
-  
   while (Serial.available()) {
     
     /* read the most recent byte */
@@ -99,17 +69,48 @@ void loop() {
     myPID.SetTunings(pidP, pidI, pidD);
   }
 
+}
+
+void setup() {
+  // give the MAX a little time to settle
+   windowStartTime = millis();
+   
+   //pin out
+  pinMode(RelayPin, OUTPUT);
+  //initialize the variables we're linked to
+  setpoint = 1050;
+
+  //tell the PID to range between 0 and the full window size
+  myPID.SetOutputLimits(0, WindowSize);
+
+  //turn the PID on
+  myPID.SetMode(AUTOMATIC);
+
+  Serial.begin(9600);
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+  unsigned long millisRemain;
+
+  serialIn();
+  
   pidActualP = myPID.GetKp(); 
   pidActualI = myPID.GetKi(); 
   pidActualD = myPID.GetKd();
   
   
-  
   if (currentMillis >= (previousMillis + 500)){
-      serialOut(0);
-      Input = ktc.readFahrenheit();
-      previousMillis = currentMillis;
-      myPID.Compute();
+    serialOut();
+      if (soakTimer >= 1){
+     Serial.print("\t | ");
+     Serial.print(millisRemain / 60000);
+     Serial.print("\t min");
+    }
+    
+    Input = ktc.readFahrenheit();
+    previousMillis = currentMillis;
+    myPID.Compute();
   }
 
   if (soakTimer >= 1 && Input >= setpoint){ //check if there is a timer set and that the device is up to temp
@@ -117,11 +118,20 @@ void loop() {
      
      
      Serial.println("\n Timer Started");
-     
      millisRemain = currentMillis - startMillis;
      
      while(millisRemain < soakTimer){
-        serialOut(millisRemain);
+            serialOut();
+              if (soakTimer >= 1){
+             Serial.print("\t | ");
+             Serial.print(millisRemain / 60000);
+             Serial.print("\t min");
+            }
+            
+            Input = ktc.readFahrenheit();
+            previousMillis = currentMillis;
+            myPID.Compute();
+      
         if(currentMillis - windowStartTime>WindowSize)
         { //time to shift the Relay Window
           windowStartTime += WindowSize;
@@ -134,6 +144,7 @@ void loop() {
           digitalWrite(RelayPin,LOW);
         }
      }
+     exit;
   }
 
   /************************************************
