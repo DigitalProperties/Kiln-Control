@@ -19,12 +19,12 @@ double pidD = 0.25;
 
 MAX6675 ktc(ktcCLK, ktcCS, ktcSO);
 
-SoftwareSerial BTserial(9, 10); // RX | TX
+//SoftwareSerial BTserial(9, 10); // RX | TX
 
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
 
-int WindowSize = 5000;
+int WindowSize = 5000;  
 unsigned long windowStartTime;
 
 
@@ -44,7 +44,7 @@ void setup() {
   myPID.SetMode(AUTOMATIC);
 
   Serial.begin(9600);
-  BTserial.begin(9600);
+  //BTserial.begin(38400);
 }
 
 void loop() {
@@ -74,6 +74,11 @@ void loop() {
   pidActualI = myPID.GetKi(); 
   pidActualD = myPID.GetKd();
   
+  Input = ktc.readFahrenheit();
+  delay(500);
+  
+  myPID.Compute();
+  
   // basic readout test
   Serial.print("\n Target = ");
   Serial.print(setpoint);
@@ -85,10 +90,8 @@ void loop() {
   Serial.print(pidActualI);
   Serial.print(" | ");
   Serial.print(pidActualD);
-  
-  Input = ktc.readFahrenheit();
 
-  myPID.Compute();
+
 
   /************************************************
    * turn the output pin on/off based on pid output
