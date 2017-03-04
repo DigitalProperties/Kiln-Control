@@ -7,15 +7,15 @@ The default setpoint is 1050*f.
 
 # Controls
 
-This kiln controller accepts serial commands, which can be issued individually or in a chained string:
+This kiln controller accepts serial commands, which can be issued individually or in a chained string (let n represent a number from 0-9):
 
-> P - P of PID, followed by a float
+> Pn.nn - P of PID, followed by a float
 
-> I - I of PID, followed by a float
+> In.nn - I of PID, followed by a float
 
-> D - D of PID, followed by a float
+> Dn.nn - D of PID, followed by a float
 
-> T - Temperature, followed by an int
+> Tnnnn - Temperature, followed by an int
 
 Example Commands: 
 
