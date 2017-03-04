@@ -121,8 +121,12 @@ void loop() {
      millisRemain = currentMillis - startMillis;
      
      while(millisRemain < soakTimer){
-            serialOut();
             
+            
+
+
+      if (currentMillis >= (previousMillis + 500)){
+             serialOut();
              Serial.print("\t | ");
              Serial.print(millisRemain);
              Serial.print("\t min");
@@ -132,8 +136,7 @@ void loop() {
              Serial.print("\t | ");
              Serial.print(startMillis);
              Serial.print("\t min");
-
-      if (currentMillis >= (previousMillis + 500)){
+             
             Input = ktc.readFahrenheit();
             previousMillis = currentMillis;
             myPID.Compute();
