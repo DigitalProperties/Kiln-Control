@@ -118,7 +118,7 @@ void loop() {
      
      
      Serial.println("\n Timer Started");
-     millisRemain =  startMillis - currentMillis;
+     millisRemain = currentMillis - startMillis;
      
      while(millisRemain < soakTimer){
 
@@ -137,6 +137,7 @@ void loop() {
             Input = ktc.readFahrenheit();
             delay(500);
             previousMillis = currentMillis;
+            millisRemain = currentMillis - startMillis;
             myPID.Compute();
       //}
       
