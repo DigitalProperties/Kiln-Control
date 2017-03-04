@@ -9,7 +9,7 @@ int ktcCS = 3;
 int ktcCLK = 4;
 byte readbyte;
 
-#define RelayPin 15
+#define RelayPin 13
 
 //Define Variables we'll be connecting to
 double setpoint, Input, Output, pidActualP, pidActualI, pidActualD;
@@ -48,7 +48,7 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
-
+  unsigned long millisRemain;
   
   while (Serial.available()) {
     
@@ -58,9 +58,9 @@ void loop() {
     switch (readbyte) {
         case 'p':
           pidP = Serial.parseFloat();
+          pidI = Serial.parseFloat();
           break;
         case 'i':
-          pidI = Serial.parseFloat();
           break;
         case 'd': 
           pidD = Serial.parseFloat();
@@ -94,6 +94,11 @@ void loop() {
       Serial.print(pidActualI);
       Serial.print(" | ");
       Serial.print(pidActualD);
+      if (soakTimer >= 1){
+       Serial.print("\t | ");
+       Serial.print(millisRemain / 60000);
+       Serial.print("\t min");
+      }
       Input = ktc.readFahrenheit();
       previousMillis = currentMillis;
       myPID.Compute();
@@ -102,7 +107,11 @@ void loop() {
   if (soakTimer >= 1 && Input >= setpoint){ //check if there is a timer set and that the device is up to temp
      unsigned long startMillis = millis(); 
      
-     while((currentMillis - startMillis) < soakTimer){
+     
+     Serial.println("\n Timer Started");
+     millisRemain = currentMillis - startMillis;
+     
+     while(millisRemain < soakTimer){
         if(currentMillis - windowStartTime>WindowSize)
         { //time to shift the Relay Window
           windowStartTime += WindowSize;
