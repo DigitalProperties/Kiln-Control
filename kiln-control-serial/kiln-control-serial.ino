@@ -104,7 +104,7 @@ void loop() {
     serialOut();
       if (soakTimer >= 1){
      Serial.print("\t | ");
-     Serial.print(millisRemain / 60000);
+     Serial.print(soakTimer / 60000);
      Serial.print("\t min");
     }
     
@@ -124,13 +124,13 @@ void loop() {
             serialOut();
             
              Serial.print("\t | ");
-             Serial.print(millisRemain / 60000);
+             Serial.print(millisRemain);
              Serial.print("\t min");
              Serial.print("\t | ");
-             Serial.print(currentMillis / 60000);
-             Serial.print("\t min");
+             Serial.print(currentMillis);
+             Serial.print("\t count");
              Serial.print("\t | ");
-             Serial.print(startMillis / 60000);
+             Serial.print(startMillis);
              Serial.print("\t min");
 
       if (currentMillis >= (previousMillis + 500)){
