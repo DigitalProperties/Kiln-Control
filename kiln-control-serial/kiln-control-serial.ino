@@ -17,6 +17,7 @@ double pidP = 1;
 double pidI = 0.05;
 double pidD = 0.25;
 
+
 MAX6675 ktc(ktcCLK, ktcCS, ktcSO);
 
 //SoftwareSerial BTserial(9, 10); // RX | TX
@@ -26,7 +27,7 @@ PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
 
 int WindowSize = 5000;  
 unsigned long windowStartTime;
-
+unsigned long previousMillis;
 
 void setup() {
   // give the MAX a little time to settle
@@ -48,6 +49,9 @@ void setup() {
 }
 
 void loop() {
+  unsigned long currentMillis = millis();
+
+  
   while (Serial.available()) {
     
     /* read the most recent byte */
@@ -75,21 +79,24 @@ void loop() {
   pidActualD = myPID.GetKd();
   
   Input = ktc.readFahrenheit();
-  delay(500);
+  
+  if (currentMillis >= (previousMillis + 500)){
+      // basic readout test
+      Serial.print("\n Target = ");
+      Serial.print(setpoint);
+      Serial.print("\t Temp *F = ");
+      Serial.print(Input);   
+      Serial.print("\t PID = ");
+      Serial.print(pidActualP);
+      Serial.print(" | ");
+      Serial.print(pidActualI);
+      Serial.print(" | ");
+      Serial.print(pidActualD);
+
+    previousMillis = currentMillis;
   
   myPID.Compute();
-  
-  // basic readout test
-  Serial.print("\n Target = ");
-  Serial.print(setpoint);
-  Serial.print("\t Temp *F = ");
-  Serial.print(Input);   
-  Serial.print("\t PID = ");
-  Serial.print(pidActualP);
-  Serial.print(" | ");
-  Serial.print(pidActualI);
-  Serial.print(" | ");
-  Serial.print(pidActualD);
+  }
 
 
 
