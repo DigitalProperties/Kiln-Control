@@ -118,7 +118,7 @@ void loop() {
      
      
      Serial.println("\n Timer Started");
-     millisRemain = currentMillis - startMillis;
+     millisRemain =  startMillis - currentMillis;
      
      while(millisRemain < soakTimer){
 
