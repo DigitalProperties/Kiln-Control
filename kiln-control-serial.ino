@@ -1,5 +1,7 @@
 #include <PID_v1.h>
 #include <max6675.h>
+#include <SoftwareSerial.h>
+
 
 //Declare the pins used for thermocouple input and relay out
 int ktcSO = 2;
@@ -7,7 +9,7 @@ int ktcCS = 3;
 int ktcCLK = 4;
 byte readbyte;
 
-#define RelayPin 5
+#define RelayPin 15
 
 //Define Variables we'll be connecting to
 double setpoint, Input, Output, pidActualP, pidActualI, pidActualD;
@@ -16,6 +18,8 @@ double pidI = 0.05;
 double pidD = 0.25;
 
 MAX6675 ktc(ktcCLK, ktcCS, ktcSO);
+
+SoftwareSerial BTserial(9, 10); // RX | TX
 
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
@@ -40,6 +44,7 @@ void setup() {
   myPID.SetMode(AUTOMATIC);
 
   Serial.begin(9600);
+  BTserial.begin(9600);
 }
 
 void loop() {
@@ -80,7 +85,7 @@ void loop() {
   Serial.print(pidActualI);
   Serial.print(" | ");
   Serial.print(pidActualD);
-
+  
   Input = ktc.readFahrenheit();
 
   myPID.Compute();
@@ -100,5 +105,4 @@ void loop() {
     digitalWrite(RelayPin,LOW);
   }
 }
-
 
