@@ -1,15 +1,14 @@
 #include <Metro.h>
 #include <PID_v1.h>
 #include <max6675.h>
-#include <SoftwareSerial.h>
 
 //Declare the pins used for thermocouple input and relay out
+#define RelayPin 13
 int ktcSO = 2;
 int ktcCS = 3;
 int ktcCLK = 4;
 byte readbyte;
 
-#define RelayPin 13
 
 //Define Variables we'll be connecting to
 double setpoint, Input, Output, pidActualP, pidActualI, pidActualD;
@@ -19,8 +18,6 @@ double pidD = 0.25;
 long setTimer, timeRemaining, readTimer;
 
 MAX6675 ktc(ktcCLK, ktcCS, ktcSO);
-
-//SoftwareSerial BTserial(9, 10); // RX | TX
 
 //S pecify the links and initial tuning parameters
 PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
@@ -34,7 +31,6 @@ unsigned long previousMillis;
 Metro holdTimer = Metro(); // Initialize
 bool doesTimerExist = false;
 bool isFinishedCycle = false;
-
 
 /*
  * Arduino Default Functions
@@ -164,14 +160,12 @@ void getReadout() {
   Serial.print(setpoint);
   Serial.print("\t Temp *F = ");
   Serial.print(Input);   
-  Serial.print("\t Output = ");
-  Serial.print(Output);   
-//  Serial.print("\t PID = ");
-//  Serial.print(myPID.GetKp());
-//  Serial.print(" | ");
-//  Serial.print(myPID.GetKi());
-//  Serial.print(" | ");
-//  Serial.print(myPID.GetKd());
+  Serial.print("\t PID = ");
+  Serial.print(myPID.GetKp());
+  Serial.print(" | ");
+  Serial.print(myPID.GetKi());
+  Serial.print(" | ");
+  Serial.print(myPID.GetKd());
   if (setTimer >= 1){
     Serial.print(" timer ");
     Serial.print(holdTimer.remaining());
