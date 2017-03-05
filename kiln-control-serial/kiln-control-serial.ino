@@ -1,6 +1,7 @@
 #include <PID_v1.h>
 #include <max6675.h>
 #include <SoftwareSerial.h>
+#include <Metro.h>
 
 //Declare the pins used for thermocouple input and relay out
 int ktcSO = 2;
@@ -26,6 +27,9 @@ PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
 int WindowSize = 5000;  
 unsigned long windowStartTime;
 unsigned long previousMillis;
+Metro holdTimer;
+bool doesTimerExist = false;
+ 
 
 void setup() {
   // give the MAX a little time to settle
@@ -72,21 +76,23 @@ void loop() {
     myPID.SetTunings(pidP, pidI, pidD);
   }
 
-  // Hold for 5 minutes at temp (NOT PSEUDO CODE)
+  // HOLD AT TEMP (aka continue as normal, until timer is hit, then shut it down)
   if (Input >= setpoint) {
     // Start a timer IF we are up to temp, and no timer yet exists to prevent overwriting/reinstantiating
-    if (!holdTimer) { // Not 100% sure this will work
-      holdTimer = Metro(60000) // Initialize
+    if (!doesTimerExist) { // Not 100% sure this will work
+      Serial.println("Created timer");
+      holdTimer = Metro(600); // Initialize
+      doesTimerExist = true;
     }
     
     // If we HIT our hold time, we set temp to 32 (0 for device)
     if (holdTimer.check()) {
+      Serial.println("Created done");
       // initialize the variables we're linked to
       setpoint = 32;
     }
   }
-
-  
+ 
   // Run every 500ms
   if (currentMillis >= (previousMillis + 500)){
       // Basic readout test
