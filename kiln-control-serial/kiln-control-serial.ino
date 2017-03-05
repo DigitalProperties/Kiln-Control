@@ -2,14 +2,13 @@
 #include <max6675.h>
 #include <SoftwareSerial.h>
 
-
 //Declare the pins used for thermocouple input and relay out
 int ktcSO = 2;
 int ktcCS = 3;
 int ktcCLK = 4;
 byte readbyte;
 
-#define RelayPin 13
+#define RelayPin 15
 
 //Define Variables we'll be connecting to
 double setpoint, Input, Output, pidActualP, pidActualI, pidActualD;
@@ -17,8 +16,9 @@ double pidP = 1;
 double pidI = 0.05;
 double pidD = 0.25;
 
-
 MAX6675 ktc(ktcCLK, ktcCS, ktcSO);
+
+//SoftwareSerial BTserial(9, 10); // RX | TX
 
 //Specify the links and initial tuning parameters
 PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
@@ -26,57 +26,14 @@ PID myPID(&Input, &Output, &setpoint, pidP, pidI, pidD, DIRECT);
 int WindowSize = 5000;  
 unsigned long windowStartTime;
 unsigned long previousMillis;
-unsigned long soakTimer;
-
-void serialOut(){
-      // basic readout test
-      Serial.print("\n Target = ");
-      Serial.print(setpoint);
-      Serial.print("\t Temp *F = ");
-      Serial.print(Input);   
-      Serial.print("\t PID = ");
-      Serial.print(pidActualP);
-      Serial.print(" | ");
-      Serial.print(pidActualI);
-      Serial.print(" | ");
-      Serial.print(pidActualD);
-}
-
-void serialIn(){
-  while (Serial.available()) {
-    
-    /* read the most recent byte */
-    readbyte = Serial.read();
-    
-    switch (readbyte) {
-        case 'p':
-          pidP = Serial.parseFloat();
-          pidI = Serial.parseFloat();
-          break;
-        case 'i':
-          break;
-        case 'd': 
-          pidD = Serial.parseFloat();
-        break;
-        case 't': 
-          setpoint = Serial.parseInt();
-        break;
-        case 'm':
-          soakTimer = Serial.parseInt();
-          soakTimer = soakTimer * 60000;   //minutes to millis
-        break;
-      }
-    myPID.SetTunings(pidP, pidI, pidD);
-  }
-
-}
 
 void setup() {
   // give the MAX a little time to settle
-   windowStartTime = millis();
+  windowStartTime = millis();
    
-   //pin out
+  // pin out
   pinMode(RelayPin, OUTPUT);
+
   //initialize the variables we're linked to
   setpoint = 1050;
 
@@ -90,85 +47,72 @@ void setup() {
 }
 
 void loop() {
+  // Get current time in loop
   unsigned long currentMillis = millis();
-  unsigned long millisRemain;
+  
+  // Readout / Set Tunings
+  while (Serial.available()) {
+    readbyte = Serial.read(); /* read the most recent byte */
+    
+    switch (readbyte) {
+        case 'p':
+          pidP = Serial.parseFloat();
+          break;
+        case 'i':
+          pidI = Serial.parseFloat();
+          break;
+        case 'd': 
+          pidD = Serial.parseFloat();
+          break;
+        case 't': 
+          setpoint = Serial.parseInt();
+          break;
+    }
 
-  serialIn();
+    myPID.SetTunings(pidP, pidI, pidD);
+  }
+
+  // Hold for 5 minutes at temp (NOT PSEUDO CODE)
+  if (Input >= setpoint) {
+    // Start a timer IF we are up to temp, and no timer yet exists to prevent overwriting/reinstantiating
+    if (!holdTimer) { // Not 100% sure this will work
+      holdTimer = Metro(60000) // Initialize
+    }
+    
+    // If we HIT our hold time, we set temp to 32 (0 for device)
+    if (holdTimer.check()) {
+      // initialize the variables we're linked to
+      setpoint = 32;
+    }
+  }
+
   
-  pidActualP = myPID.GetKp(); 
-  pidActualI = myPID.GetKi(); 
-  pidActualD = myPID.GetKd();
-  
-  
+  // Run every 500ms
   if (currentMillis >= (previousMillis + 500)){
-    serialOut();
-      if (soakTimer >= 1){
-     Serial.print("\t | ");
-     Serial.print(soakTimer / 60000);
-     Serial.print("\t min");
-    }
-    
-    Input = ktc.readFahrenheit();
-    previousMillis = currentMillis;
-    myPID.Compute();
+      // Basic readout test
+      Serial.print("\n Target = ");
+      Serial.print(setpoint);
+      Serial.print("\t Temp *F = ");
+      Serial.print(Input);   
+      Serial.print("\t PID = ");
+      Serial.print(myPID.GetKp());
+      Serial.print(" | ");
+      Serial.print(myPID.GetKi());
+      Serial.print(" | ");
+      Serial.print(myPID.GetKd());
+
+      // Update values
+      Input = ktc.readFahrenheit();
+      previousMillis = currentMillis;
+      myPID.Compute();
   }
 
-  if (soakTimer >= 1 && Input >= setpoint){ //check if there is a timer set and that the device is up to temp
-     unsigned long startMillis = millis(); 
-     
-     
-     Serial.println("\n Timer Started");
-     millisRemain = currentMillis - startMillis;
-     
-     while(millisRemain < soakTimer){
-            serialOut();
-            
-             Serial.print("\t | ");
-             Serial.print(millisRemain);
-             Serial.print("\t min");
-             Serial.print("\t | ");
-             Serial.print(currentMillis);
-             Serial.print("\t count");
-             Serial.print("\t | ");
-             Serial.print(startMillis);
-             Serial.print("\t min");
-
-      if (currentMillis >= (previousMillis + 500)){
-            Input = ktc.readFahrenheit();
-            previousMillis = currentMillis;
-            myPID.Compute();
-      }
-      
-        if(currentMillis - windowStartTime>WindowSize)
-        { //time to shift the Relay Window
-          windowStartTime += WindowSize;
-        }
-        
-        if(Output < currentMillis - windowStartTime) {
-          digitalWrite(RelayPin,HIGH);
-        }
-        else{
-          digitalWrite(RelayPin,LOW);
-        }
-     }
-     exit;
-  }
-
-  /************************************************
-   * turn the output pin on/off based on pid output
-   ************************************************/
-  else{
-    if(millis() - windowStartTime>WindowSize)
-    { //time to shift the Relay Window
-      windowStartTime += WindowSize;
-    }
-    
-    if(Output < millis() - windowStartTime) {
-      digitalWrite(RelayPin,HIGH);
-    }
-    else{
-      digitalWrite(RelayPin,LOW);
-    }
+  /* turn the output pin on/off based on pid output */
+  if(millis() - windowStartTime>WindowSize){ //time to shift the Relay Window
+    windowStartTime += WindowSize;
+  }if(Output < millis() - windowStartTime) {
+    digitalWrite(RelayPin,HIGH);
+  } else{
+    digitalWrite(RelayPin,LOW);
   }
 }
-
