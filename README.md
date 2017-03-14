@@ -26,13 +26,13 @@ Example Commands:
 > T1050 - sets the temperature setpoint to 1050*f
 
 # Hardware
-- Max6675 with breakout 
+- Max6675 with breakout
 - K-Type thermocouple
 - Arduino Nano
-- HC-06 Bluetooth TX/RX
-- 1k ohm resistor
-- 2k ohm resistor
-- Relay
+- HC-06 Bluetooth TX/RX (optional)
+- 1k ohm resistor (part of voltage divider for bluetooth)
+- 2k ohm resistor (also part of voltage divider)
+- 15amp or 20amp Relay (This depends on your wattage (watts/120 = minimum amps) 
 
 *Notes:
 There is a 500ms delay within the loop to allow for the Max6675 chip to settle. Without this delay, the values are not useable. *
